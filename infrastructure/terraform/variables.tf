@@ -1,4 +1,4 @@
 variable "key_pair" {
-  description = "The name of the SSH key pair"
+  description = "Name of the AWS EC2 key pair to use for SSH"
   type        = string
 }
