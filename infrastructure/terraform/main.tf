@@ -65,7 +65,7 @@ resource "aws_instance" "bastion" {
   instance_type = "t2.micro"
   key_name      = var.key_pair
   subnet_id     = aws_subnet.main.id
-  security_groups = [aws_security_group.k8s_sg.name]
+  vpc_security_group_ids = [aws_security_group.k8s_sg.id]
 
   tags = {
     Name     = "bastion-host --- Group B"
@@ -81,7 +81,7 @@ resource "aws_instance" "master" {
   instance_type = "t2.medium"
   key_name      = var.key_pair
   subnet_id     = aws_subnet.main.id
-  security_groups = [aws_security_group.k8s_sg.name]
+  vpc_security_group_ids = [aws_security_group.k8s_sg.id]
 
   tags = {
     Name     = "k8s-master --- Group B"
@@ -97,7 +97,7 @@ resource "aws_instance" "worker" {
   instance_type = "t2.medium"
   key_name      = var.key_pair
   subnet_id     = aws_subnet.main.id
-  security_groups = [aws_security_group.k8s_sg.name]
+  vpc_security_group_ids = [aws_security_group.k8s_sg.id]
 
   tags = {
     Name     = "k8s-worker --- Group B"
