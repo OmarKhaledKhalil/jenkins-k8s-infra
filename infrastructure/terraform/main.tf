@@ -61,11 +61,11 @@ resource "aws_security_group" "k8s_sg" {
 }
 
 resource "aws_instance" "bastion" {
-  ami                    = "ami-0c02fb55956c7d316"
-  instance_type          = "t2.micro"
-  key_name               = var.key_pair
-  subnet_id              = aws_subnet.main.id
-  vpc_security_group_ids = [aws_security_group.k8s_sg.id]
+  ami                         = "ami-0c02fb55956c7d316"
+  instance_type               = "t2.micro"
+  key_name                    = var.key_pair
+  subnet_id                   = aws_subnet.main.id
+  vpc_security_group_ids      = [aws_security_group.k8s_sg.id]
   associate_public_ip_address = true
 
   tags = {
@@ -78,11 +78,11 @@ resource "aws_instance" "bastion" {
 }
 
 resource "aws_instance" "master" {
-  ami                    = "ami-0c02fb55956c7d316"
-  instance_type          = "t2.medium"
-  key_name               = var.key_pair
-  subnet_id              = aws_subnet.main.id
-  vpc_security_group_ids = [aws_security_group.k8s_sg.id]
+  ami                         = "ami-0c02fb55956c7d316"
+  instance_type               = "t2.medium"
+  key_name                    = var.key_pair
+  subnet_id                   = aws_subnet.main.id
+  vpc_security_group_ids      = [aws_security_group.k8s_sg.id]
   associate_public_ip_address = false
 
   tags = {
@@ -95,11 +95,11 @@ resource "aws_instance" "master" {
 }
 
 resource "aws_instance" "worker" {
-  ami                    = "ami-0c02fb55956c7d316"
-  instance_type          = "t2.medium"
-  key_name               = var.key_pair
-  subnet_id              = aws_subnet.main.id
-  vpc_security_group_ids = [aws_security_group.k8s_sg.id]
+  ami                         = "ami-0c02fb55956c7d316"
+  instance_type               = "t2.medium"
+  key_name                    = var.key_pair
+  subnet_id                   = aws_subnet.main.id
+  vpc_security_group_ids      = [aws_security_group.k8s_sg.id]
   associate_public_ip_address = false
 
   tags = {
@@ -110,3 +110,4 @@ resource "aws_instance" "worker" {
     Owner3   = "Mariam Mohsen"
   }
 }
+
