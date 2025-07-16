@@ -1,0 +1,57 @@
+pipeline {
+    agent any
+
+    environment {
+        TF_DIR = "infrastructure/terraform"
+        ANSIBLE_DIR = "infrastructure/ansible"
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                git url: 'https://github.com/OmarKhaledKhalil/jenkins-k8s-infra.git', branch: 'main'
+            }
+        }
+
+        stage('Terraform Init & Apply') {
+            steps {
+                dir("${TF_DIR}") {
+                    sh '''
+                        terraform init
+                        terraform apply -auto-approve -var="key_pair=jenkins-key"
+                    '''
+                }
+            }
+        }
+
+        stage('Wait for EC2 Boot') {
+            steps {
+                echo "Waiting 60 seconds for EC2 instances to finish booting..."
+                sleep 60
+            }
+        }
+
+        stage('Run Ansible Playbook') {
+            steps {
+                dir("${ANSIBLE_DIR}") {
+                    withCredentials([sshUserPrivateKey(credentialsId: 'ansible-ssh-key', keyFileVariable: 'SSH_KEY')]) {
+                        sh '''
+                            chmod 400 $SSH_KEY
+                            ansible-playbook -i inventory.ini playbook.yml --private-key $SSH_KEY
+                        '''
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ Infrastructure and Kubernetes setup completed successfully."
+        }
+        failure {
+            echo "❌ Pipeline failed. Check logs for errors."
+        }
+    }
+}
+
