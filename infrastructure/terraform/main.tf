@@ -14,8 +14,8 @@ resource "aws_vpc" "main" {
 }
 
 resource "aws_subnet" "main" {
-  vpc_id     = aws_vpc.main.id
-  cidr_block = "10.0.1.0/24"
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.1.0/24"
   availability_zone = "us-east-1a"
 
   tags = {
@@ -61,11 +61,12 @@ resource "aws_security_group" "k8s_sg" {
 }
 
 resource "aws_instance" "bastion" {
-  ami           = "ami-0c02fb55956c7d316" # Amazon Linux 2 (us-east-1)
-  instance_type = "t2.micro"
-  key_name      = var.key_pair
-  subnet_id     = aws_subnet.main.id
+  ami                    = "ami-0c02fb55956c7d316"
+  instance_type          = "t2.micro"
+  key_name               = var.key_pair
+  subnet_id              = aws_subnet.main.id
   vpc_security_group_ids = [aws_security_group.k8s_sg.id]
+  associate_public_ip_address = true
 
   tags = {
     Name     = "bastion-host --- Group B"
@@ -77,11 +78,12 @@ resource "aws_instance" "bastion" {
 }
 
 resource "aws_instance" "master" {
-  ami           = "ami-0c02fb55956c7d316"
-  instance_type = "t2.medium"
-  key_name      = var.key_pair
-  subnet_id     = aws_subnet.main.id
+  ami                    = "ami-0c02fb55956c7d316"
+  instance_type          = "t2.medium"
+  key_name               = var.key_pair
+  subnet_id              = aws_subnet.main.id
   vpc_security_group_ids = [aws_security_group.k8s_sg.id]
+  associate_public_ip_address = false
 
   tags = {
     Name     = "k8s-master --- Group B"
@@ -93,11 +95,12 @@ resource "aws_instance" "master" {
 }
 
 resource "aws_instance" "worker" {
-  ami           = "ami-0c02fb55956c7d316"
-  instance_type = "t2.medium"
-  key_name      = var.key_pair
-  subnet_id     = aws_subnet.main.id
+  ami                    = "ami-0c02fb55956c7d316"
+  instance_type          = "t2.medium"
+  key_name               = var.key_pair
+  subnet_id              = aws_subnet.main.id
   vpc_security_group_ids = [aws_security_group.k8s_sg.id]
+  associate_public_ip_address = false
 
   tags = {
     Name     = "k8s-worker --- Group B"
