@@ -1,25 +1,63 @@
 ---
+- name: Install containerd
+  shell: |
+    yum install -y containerd
+    mkdir -p /etc/containerd
+    containerd config default > /etc/containerd/config.toml
+    systemctl restart containerd
+    systemctl enable containerd
+
+- name: Add Kubernetes repo
+  copy:
+    dest: /etc/yum.repos.d/kubernetes.repo
+    content: |
+      [kubernetes]
+      name=Kubernetes
+      baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+      enabled=1
+      gpgcheck=1
+      repo_gpgcheck=1
+      gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+      exclude=kubelet kubeadm kubectl
+
+- name: Install Kubernetes packages
+  yum:
+    name:
+      - kubelet-{{ kubernetes_version }}
+      - kubeadm-{{ kubernetes_version }}
+      - kubectl-{{ kubernetes_version }}
+    state: present
+    disable_gpg_check: yes
+    enablerepo: kubernetes
+    exclude: kubelet kubeadm kubectl
+
+- name: Enable and start kubelet
+  systemd:
+    name: kubelet
+    enabled: yes
+    state: started
+
 - name: Initialize Kubernetes Master
   shell: |
-    kubeadm init --pod-network-cidr=10.244.0.0/16
+    kubeadm init --pod-network-cidr=10.244.0.0/16 >> /root/kubeinit.log
+    mkdir -p /root/.kube
+    cp /etc/kubernetes/admin.conf /root/.kube/config
   args:
     creates: /etc/kubernetes/admin.conf
 
-- name: Setup kubeconfig for ec2-user
-  shell: |
-    mkdir -p /home/ec2-user/.kube
-    cp -i /etc/kubernetes/admin.conf /home/ec2-user/.kube/config
-    chown ec2-user:ec2-user /home/ec2-user/.kube/config
-
 - name: Install Flannel CNI
-  become: yes
-  become_user: ec2-user
-  shell: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+  command: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
 
-- name: Extract kubeadm join command
+- name: Generate join command
   shell: kubeadm token create --print-join-command
-  register: join_cmd
+  register: join_command
 
-- name: Set join command fact
-  set_fact:
-    join_command: "{{ join_cmd.stdout }}"
+- name: Save join command
+  copy:
+    dest: /tmp/kube_join.sh
+    content: |
+      #!/bin/bash
+      {{ join_command.stdout }}
+    mode: '0755'
