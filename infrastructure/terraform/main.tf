@@ -39,18 +39,28 @@ resource "aws_security_group" "k8s_sg" {
   description = "Allow SSH and Kubernetes ports"
   vpc_id      = aws_vpc.main.id
 
+  # SSH from Jenkins
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["${var.jenkins_host_ip}/32"]  # Restrict SSH to Jenkins IP only
+    cidr_blocks = ["${var.jenkins_host_ip}/32"]
   }
 
+  # Kubernetes API
   ingress {
     from_port   = 6443
     to_port     = 6443
     protocol    = "tcp"
     cidr_blocks = ["${var.jenkins_host_ip}/32"]
+  }
+
+  # SSH from Bastion to private nodes
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.1.0/24"]
   }
 
   egress {
