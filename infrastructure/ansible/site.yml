@@ -1,15 +1,18 @@
 ---
-- hosts: all
+- name: Common setup on all nodes
+  hosts: all
   become: yes
   roles:
     - common
 
-- hosts: master
+- name: Kubernetes master setup
+  hosts: master
   become: yes
   roles:
     - master
 
-- hosts: worker
+- name: Kubernetes worker setup
+  hosts: worker
   become: yes
   roles:
     - worker
