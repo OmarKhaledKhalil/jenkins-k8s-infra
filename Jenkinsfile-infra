@@ -48,7 +48,9 @@ pipeline {
         stage('Generate Ansible Inventory') {
             steps {
                 dir("${ANSIBLE_DIR}") {
-                    sh "./generate_inventory.sh $SSH_KEY"
+                    withCredentials([sshUserPrivateKey(credentialsId: 'ansible-ssh-key', keyFileVariable: 'SSH_KEY')]) {
+                        sh "./generate_inventory.sh $SSH_KEY"
+                    }
                 }
             }
         }
