@@ -4,16 +4,20 @@ pipeline {
     environment {
         TF_DIR = "infrastructure/terraform"
         ANSIBLE_DIR = "infrastructure/ansible"
+        JENKINS_IP = '' // We'll populate this dynamically in the first stage
     }
 
     stages {
         stage('Checkout Code') {
             steps {
+                script {
+                    JENKINS_IP = sh(script: "curl -s https://checkip.amazonaws.com", returnStdout: true).trim()
+                }
                 git url: 'https://github.com/OmarKhaledKhalil/jenkins-k8s-infra.git', branch: 'main'
             }
         }
 
-        stage('Terraform Init & Apply') {
+        stage('Terraform Init') {
             steps {
                 dir("${TF_DIR}") {
                     withCredentials([
@@ -27,9 +31,28 @@ pipeline {
                             export AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN
 
                             terraform init
-                            terraform apply -auto-approve -var="key_pair=jenkins-key"
                         '''
                     }
+                }
+            }
+        }
+
+        stage('Terraform Plan') {
+            steps {
+                dir("${TF_DIR}") {
+                    sh """
+                        terraform plan -var="key_pair=jenkins-key" -var="jenkins_host_ip=${JENKINS_IP}"
+                    """
+                }
+            }
+        }
+
+        stage('Terraform Apply') {
+            steps {
+                dir("${TF_DIR}") {
+                    sh """
+                        terraform apply -auto-approve -var="key_pair=jenkins-key" -var="jenkins_host_ip=${JENKINS_IP}"
+                    """
                 }
             }
         }
