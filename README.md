@@ -1,6 +1,6 @@
 # jenkins-k8s-infra
 
-There is more than to go on about running jenkins, one way is running jenkins on WSL (ubuntu) or running jenkins inside docker to isolate and manage it but we'll stick to running jenkins in docker for now!
+There is more than one way to go on about running jenkins, one way is running jenkins on WSL (ubuntu) or running jenkins inside docker to isolate and manage it but we'll stick to running jenkins in docker for now!
 
 ## Run Jenkins in Docker (on WSL Ubuntu)
 This guide will get you up and running using the official jenkins/jenkins:lts image.
@@ -59,5 +59,12 @@ Name job (eg: infra-pipeline), then select pipeline
 - Jenkins will automatically detect and run it.
 - Make sure the file is in the root of your repo.
 ### Now save and build!
+
+## Notes: (work around)
+AWS credentials tend to change frequently
+ - go to credentials
+ - choose secret
+ - in ID: aws-access-key-id, add the rest of the credentials
+
 
 
