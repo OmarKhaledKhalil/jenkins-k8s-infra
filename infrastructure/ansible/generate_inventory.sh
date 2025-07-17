@@ -12,23 +12,21 @@ WORKER_IP=$(cd "$TF_DIR" && terraform output -raw worker_private_ip)
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 INVENTORY_DIR="${SCRIPT_DIR}/inventory"
 
-# Create inventory directory if not exists
+# Create inventory directory if it doesn't exist
 mkdir -p "$INVENTORY_DIR"
 
-# Define private key path used inside Jenkins container
-KEY_PATH=~/.ssh/jenkins-key.pem
-
-# Write inventory file with jump host config
+# Write inventory file
 cat <<EOF > "${INVENTORY_DIR}/hosts.ini"
+[bastion]
+${BASTION_IP}
+
 [master]
-${MASTER_IP} ansible_user=ec2-user ansible_ssh_private_key_file=$KEY_PATH ansible_ssh_common_args='-o ProxyCommand="ssh -i $KEY_PATH -W %h:%p ec2-user@$BASTION_IP"'
+${MASTER_IP} ansible_ssh_common_args='-o ProxyCommand="ssh -i ~/.ssh/jenkins-key.pem -W %h:%p ec2-user@${BASTION_IP}" -o StrictHostKeyChecking=no'
 
 [worker]
-${WORKER_IP} ansible_user=ec2-user ansible_ssh_private_key_file=$KEY_PATH ansible_ssh_common_args='-o ProxyCommand="ssh -i $KEY_PATH -W %h:%p ec2-user@$BASTION_IP"'
-
-[bastion]
-${BASTION_IP} ansible_user=ec2-user ansible_ssh_private_key_file=$KEY_PATH
+${WORKER_IP} ansible_ssh_common_args='-o ProxyCommand="ssh -i ~/.ssh/jenkins-key.pem -W %h:%p ec2-user@${BASTION_IP}" -o StrictHostKeyChecking=no'
 
 [all:vars]
-ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+ansible_user=ec2-user
+ansible_ssh_private_key_file=~/.ssh/jenkins-key.pem
 EOF
