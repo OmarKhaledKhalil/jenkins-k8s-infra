@@ -1,18 +1,51 @@
 ---
-- name: Install common packages
+- name: Update all packages
   yum:
-    name: "{{ item }}"
+    name: "*"
+    state: latest
+
+- name: Install dependencies
+  yum:
+    name:
+      - yum-utils
+      - device-mapper-persistent-data
+      - lvm2
+      - curl
+      - wget
     state: present
-  loop: "{{ packages }}"
 
-- name: Enable and start Docker
-  systemd:
-    name: docker
-    enabled: yes
-    state: started
+- name: Disable SELinux
+  selinux:
+    state: disabled
 
-- name: Add ec2-user to docker group
-  user:
-    name: ec2-user
-    groups: docker
-    append: yes
+- name: Disable firewalld
+  service:
+    name: firewalld
+    state: stopped
+    enabled: no
+
+- name: Enable br_netfilter
+  modprobe:
+    name: br_netfilter
+    state: present
+
+- name: Set sysctl params
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: yes
+  with_items:
+    - { key: net.bridge.bridge-nf-call-iptables, value: 1 }
+    - { key: net.bridge.bridge-nf-call-ip6tables, value: 1 }
+    - { key: net.ipv4.ip_forward, value: 1 }
+
+- name: Disable swap
+  command: swapoff -a
+  become: true
+
+- name: Remove swap from fstab
+  replace:
+    path: /etc/fstab
+    regexp: '^.*swap.*$'
+    replace: ''
