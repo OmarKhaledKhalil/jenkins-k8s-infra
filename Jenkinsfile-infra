@@ -14,31 +14,44 @@ pipeline {
         }
 
         stage('Terraform Init & Apply') {
-    steps {
-        dir("${TF_DIR}") {
-            withCredentials([
-                string(credentialsId: 'aws-access-key-id', variable: 'AWS_ACCESS_KEY_ID'),
-                string(credentialsId: 'aws-secret-access-key', variable: 'AWS_SECRET_ACCESS_KEY'),
-                string(credentialsId: 'aws-session-token', variable: 'AWS_SESSION_TOKEN')
-            ]) {
-                sh '''
-                    export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
-                    export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-                    export AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN
+            steps {
+                dir("${TF_DIR}") {
+                    withCredentials([
+                        string(credentialsId: 'aws-access-key-id', variable: 'AWS_ACCESS_KEY_ID'),
+                        string(credentialsId: 'aws-secret-access-key', variable: 'AWS_SECRET_ACCESS_KEY'),
+                        string(credentialsId: 'aws-session-token', variable: 'AWS_SESSION_TOKEN')
+                    ]) {
+                        sh '''
+                            export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+                            export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+                            export AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN
 
-                    terraform init
-                    terraform apply -auto-approve -var="key_pair=jenkins-key"
-                '''
+                            terraform init
+                            terraform apply -auto-approve -var="key_pair=jenkins-key"
+                        '''
+                    }
+                }
             }
         }
-    }
-}
-
 
         stage('Wait for EC2 Boot') {
             steps {
-                echo "Waiting 60 seconds for EC2 instances to finish booting..."
+                echo "⏳ Waiting 120 seconds for EC2 instances to boot..."
                 sleep 120
+            }
+        }
+
+        stage('Generate Ansible Inventory') {
+            steps {
+                dir("${TF_DIR}") {
+                    sh '''
+                        terraform output -raw bastion_ip > /tmp/bastion_ip
+                        terraform output -raw master_private_ip > /tmp/master_ip
+                        terraform output -raw worker_private_ip > /tmp/worker_ip
+
+                        bash ../ansible/generate_inventory.sh
+                    '''
+                }
             }
         }
 
@@ -65,4 +78,3 @@ pipeline {
         }
     }
 }
-
