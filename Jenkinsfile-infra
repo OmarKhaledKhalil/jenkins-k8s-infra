@@ -43,14 +43,8 @@ pipeline {
 
         stage('Generate Ansible Inventory') {
             steps {
-                dir("${TF_DIR}") {
-                    sh '''
-                        terraform output -raw bastion_ip > /tmp/bastion_ip
-                        terraform output -raw master_private_ip > /tmp/master_ip
-                        terraform output -raw worker_private_ip > /tmp/worker_ip
-
-                        bash ../ansible/generate_inventory.sh
-                    '''
+                dir("${ANSIBLE_DIR}") {
+                    sh './generate_inventory.sh'
                 }
             }
         }
