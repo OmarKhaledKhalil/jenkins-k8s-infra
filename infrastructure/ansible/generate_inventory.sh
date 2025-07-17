@@ -1,19 +1,5 @@
 #!/bin/bash
 
-# === generate_inventory.sh ===
-# Usage: ./generate_inventory.sh /path/to/private_key.pem
-# This script generates the Ansible inventory file using Terraform outputs
-# and configures master/worker SSH access via the bastion host.
-
-# Validate SSH key input
-SSH_KEY_PATH="$1"
-if [ -z "$SSH_KEY_PATH" ]; then
-  echo "❌ ERROR: SSH key path argument missing."
-  echo "Usage: $0 /path/to/private_key.pem"
-  exit 1
-fi
-
-# Set the Terraform directory relative to this script
 TF_DIR="$(cd "$(dirname "$0")/../terraform" && pwd)"
 
 # Get Terraform outputs
@@ -21,14 +7,13 @@ BASTION_IP=$(cd "$TF_DIR" && terraform output -raw bastion_ip)
 MASTER_IP=$(cd "$TF_DIR" && terraform output -raw master_private_ip)
 WORKER_IP=$(cd "$TF_DIR" && terraform output -raw worker_private_ip)
 
-# Define inventory directory relative to this script
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-INVENTORY_DIR="${SCRIPT_DIR}/inventory"
-
-# Create inventory directory if not exists
+INVENTORY_DIR="$(cd "$(dirname "$0")" && pwd)/inventory"
 mkdir -p "$INVENTORY_DIR"
 
-# Write Ansible inventory file
+# Path to SSH key (passed from Jenkins)
+SSH_KEY_PATH=$1
+
+# Write Ansible inventory
 cat <<EOF > "${INVENTORY_DIR}/hosts.ini"
 [bastion]
 ${BASTION_IP}
