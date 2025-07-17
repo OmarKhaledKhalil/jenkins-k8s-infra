@@ -1,3 +1,47 @@
 ---
-- name: Join Kubernetes Worker to the Cluster
-  shell: "{{ hostvars['master']['join_command'] }}"
+- name: Install containerd
+  shell: |
+    yum install -y containerd
+    mkdir -p /etc/containerd
+    containerd config default > /etc/containerd/config.toml
+    systemctl restart containerd
+    systemctl enable containerd
+
+- name: Add Kubernetes repo
+  copy:
+    dest: /etc/yum.repos.d/kubernetes.repo
+    content: |
+      [kubernetes]
+      name=Kubernetes
+      baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+      enabled=1
+      gpgcheck=1
+      repo_gpgcheck=1
+      gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+      exclude=kubelet kubeadm kubectl
+
+- name: Install Kubernetes packages
+  yum:
+    name:
+      - kubelet-{{ kubernetes_version }}
+      - kubeadm-{{ kubernetes_version }}
+    state: present
+    disable_gpg_check: yes
+    enablerepo: kubernetes
+    exclude: kubelet kubeadm
+
+- name: Enable and start kubelet
+  systemd:
+    name: kubelet
+    enabled: yes
+    state: started
+
+- name: Copy join command from master
+  fetch:
+    src: /tmp/kube_join.sh
+    dest: /tmp/kube_join.sh
+    flat: yes
+  delegate_to: master
+
+- name: Execute join script
+  command: bash /tmp/kube_join.sh
